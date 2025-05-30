@@ -2,48 +2,63 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>Dynamic Gallery with Thumbnails</title>
+  <title>Gallery of core-assets</title>
   <style>
     body {
       font-family: sans-serif;
       padding: 20px;
-      background: #f9f9f9;
+      background: #f4f2ee; /* off-white background */
     }
     h1 {
       font-size: 1.5em;
     }
-    .gallery {
+    .gallery-row {
       display: flex;
-      flex-wrap: wrap;
-      gap: 12px;
+      align-items: center;
+      background: white;
+      padding: 8px 12px;
+      margin: 6px 0;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
     }
-    .gallery-item {
-      width: 160px;
+    .thumb {
+      width: 64px;
+      height: 64px;
+      background: #f4f2ee;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-right: 16px;
       border: 1px solid #ccc;
-      padding: 5px;
-      background: #fff;
-      text-align: center;
     }
-    .gallery-item img {
+    .thumb img {
       max-width: 100%;
-      height: auto;
-      display: block;
-      margin: 0 auto 4px;
+      max-height: 100%;
     }
-    a.folder-link {
+    .file-info {
+      flex-grow: 1;
+    }
+    .file-name {
+      font-weight: bold;
+      word-break: break-word;
+    }
+    .folder-link {
+      font-weight: bold;
+      color: #333;
       display: inline-block;
       margin: 8px 0;
     }
   </style>
 </head>
 <body>
-  <h1>Dynamic Gallery of core-assets</h1>
-  <div id="gallery" class="gallery"></div>
+  <h1>Gallery of core-assets</h1>
+  <div id="gallery"></div>
 
   <script>
     const username = 'stustustudio';
     const repo = 'higher';
-    const path = 'media/core-assets';
+    const basePath = 'media/core-assets';
 
     async function fetchFiles(folder) {
       const res = await fetch(`https://api.github.com/repos/${username}/${repo}/contents/${folder}`);
@@ -52,29 +67,40 @@
 
     function displayFiles(files) {
       const gallery = document.getElementById('gallery');
-      gallery.innerHTML = ''; // Clear existing
+      gallery.innerHTML = '';
+
       files.forEach(file => {
-        if (file.type === "file" && /\.(jpe?g|png|gif|webp|svg)$/i.test(file.name)) {
-          const item = document.createElement('div');
-          item.className = 'gallery-item';
-          item.innerHTML = `
-            <img src="${file.download_url}" alt="${file.name}">
-            <div>${file.name}</div>
-          `;
-          gallery.appendChild(item);
-        } else if (file.type === "dir") {
+        if (file.type === 'dir') {
           const link = document.createElement('a');
           link.href = `?folder=${file.path}`;
-          link.textContent = '📁 ' + file.name;
           link.className = 'folder-link';
+          link.textContent = '📁 ' + file.name;
           gallery.appendChild(link);
+        } else if (file.type === 'file' && /\.(jpe?g|png|gif|webp|svg)$/i.test(file.name)) {
+          const row = document.createElement('div');
+          row.className = 'gallery-row';
+
+          const thumb = document.createElement('div');
+          thumb.className = 'thumb';
+          const img = document.createElement('img');
+          img.src = file.download_url;
+          img.alt = file.name;
+          thumb.appendChild(img);
+
+          const info = document.createElement('div');
+          info.className = 'file-info';
+          info.innerHTML = `<div class="file-name">${file.name}</div><div>${(file.size / 1024).toFixed(1)} KB</div>`;
+
+          row.appendChild(thumb);
+          row.appendChild(info);
+          gallery.appendChild(row);
         }
       });
     }
 
     async function loadGallery() {
       const params = new URLSearchParams(window.location.search);
-      const folder = params.get('folder') || path;
+      const folder = params.get('folder') || basePath;
       const files = await fetchFiles(folder);
       displayFiles(files);
     }
