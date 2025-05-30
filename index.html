@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Dynamic Gallery</title>
+  <style>
+    body { font-family: sans-serif; padding: 20px; }
+    img { max-width: 200px; margin: 10px; display: inline-block; border: 1px solid #ccc; }
+    a { display: block; margin: 10px 0; }
+  </style>
+</head>
+<body>
+  <h1>Gallery of core-assets</h1>
+  <div id="gallery"></div>
+
+  <script>
+    const username = 'stustustudio';
+    const repo = 'higher';
+    const path = 'media/core-assets';
+
+    async function fetchFiles(folder) {
+      const res = await fetch(`https://api.github.com/repos/${username}/${repo}/contents/${folder}`);
+      const files = await res.json();
+      return files;
+    }
+
+    function displayFiles(files, basePath) {
+      const gallery = document.getElementById('gallery');
+      files.forEach(file => {
+        if (file.type === "file" && /\.(jpg|jpeg|png|gif|webp|svg)$/i.test(file.name)) {
+          const img = document.createElement('img');
+          img.src = file.download_url;
+          img.alt = file.name;
+          gallery.appendChild(img);
+        } else if (file.type === "dir") {
+          const link = document.createElement('a');
+          link.href = `?folder=${file.path}`;
+          link.textContent = '📁 ' + file.name;
+          gallery.appendChild(link);
+        }
+      });
+    }
+
+    async function loadGallery() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const folder = urlParams.get('folder') || path;
+      const files = await fetchFiles(folder);
+      displayFiles(files, folder);
+    }
+
+    loadGallery();
+  </script>
+</body>
+</html>
